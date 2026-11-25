@@ -17,8 +17,16 @@ export type StaffUser = keyof typeof ACCOUNTS;
 
 const isAccount = (name: string): name is StaffUser => Object.hasOwn(ACCOUNTS, name);
 
+/** Env values pasted into a dashboard can carry stray spaces or quotes; ignore them. */
+function envValue(name: string) {
+  const v = process.env[name]?.trim();
+  if (!v) return undefined;
+  const quoted = v.match(/^(['"])(.*)\1$/);
+  return quoted ? quoted[2] : v;
+}
+
 function secret() {
-  const s = process.env.SESSION_SECRET;
+  const s = envValue("SESSION_SECRET");
   if (!s || s.length < 16) throw new Error("SESSION_SECRET is not set");
   return s;
 }
@@ -35,8 +43,8 @@ function safeEqual(a: string, b: string) {
 export function checkLogin(username: string, password: string): StaffUser | null {
   const name = username.trim().toLowerCase();
   // Compare against a dummy when the username is unknown so timing doesn't reveal valid names.
-  const expected = isAccount(name) ? process.env[ACCOUNTS[name].env] : undefined;
-  const ok = safeEqual(password, expected || "\0unset");
+  const expected = isAccount(name) ? envValue(ACCOUNTS[name].env) : undefined;
+  const ok = safeEqual(password.trim(), expected || "\0unset");
   return ok && expected && isAccount(name) ? name : null;
 }
 
