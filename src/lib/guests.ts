@@ -1,7 +1,7 @@
 import "server-only";
 import { randomBytes } from "node:crypto";
 import { db } from "./db";
-import type { Arrival } from "./rsvp-schema";
+import { arrivalLabel, type Arrival } from "./rsvp-schema";
 
 export type Guest = {
   id: string;
@@ -57,4 +57,56 @@ export async function findByToken(token: string) {
   if (!/^[A-Za-z0-9_-]{10,64}$/.test(token)) return null;
   const rows = (await db()`select * from guests where token = ${token} limit 1`) as Guest[];
   return rows[0] ?? null;
+}
+
+export type CheckinGuest = {
+  token: string;
+  fullName: string;
+  arrival: string;
+  status: "valid" | "arrived" | "unknown";
+  checkedInAt: string | null;
+};
+
+export function toCheckinGuest(guest: Guest | null, token: string): CheckinGuest {
+  if (!guest || guest.response !== "attending") {
+    return { token, fullName: "", arrival: "", status: "unknown", checkedInAt: null };
+  }
+  return {
+    token: guest.token,
+    fullName: guest.full_name,
+    arrival: arrivalLabel(guest.arrival),
+    status: guest.checked_in_at ? "arrived" : "valid",
+    checkedInAt: guest.checked_in_at ? new Date(guest.checked_in_at).toISOString() : null,
+  };
+}
+
+/** Marks the guest as arrived. Returns null if the token isn't an attending guest. */
+export async function checkIn(token: string) {
+  if (!/^[A-Za-z0-9_-]{10,64}$/.test(token)) return null;
+  const updated = (await db()`
+    update guests set checked_in_at = now()
+    where token = ${token} and response = 'attending' and checked_in_at is null
+    returning checked_in_at
+  `) as { checked_in_at: string }[];
+  if (updated[0]) return { checkedInAt: new Date(updated[0].checked_in_at).toISOString(), already: false };
+
+  const guest = await findByToken(token);
+  if (!guest || guest.response !== "attending" || !guest.checked_in_at) return null;
+  return { checkedInAt: new Date(guest.checked_in_at).toISOString(), already: true };
+}
+
+export async function counts() {
+  const rows = (await db()`
+    select
+      count(*) filter (where response = 'attending')::int as attending,
+      count(*) filter (where response = 'attending' and checked_in_at is not null)::int as admitted,
+      count(*) filter (where response = 'attending' and needs_parking)::int as cars,
+      count(*) filter (where response = 'declined')::int as declined
+    from guests
+  `) as { attending: number; admitted: number; cars: number; declined: number }[];
+  return rows[0];
+}
+
+export async function allGuests() {
+  return (await db()`select * from guests order by lower(full_name), created_at`) as Guest[];
 }
