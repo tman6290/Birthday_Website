@@ -36,9 +36,9 @@ export const acceptSchema = z.object({
   response: z.literal("accept"),
   fullName,
   phone: z
-    .string({ error: "Enter a valid phone number" })
+    .string({ error: "Enter a valid WhatsApp number" })
     .transform(normalisePhone)
-    .pipe(z.string().regex(/^\+?\d{7,15}$/, { error: "Enter a valid phone number" })),
+    .pipe(z.string().regex(/^\+?\d{7,15}$/, { error: "Enter a valid WhatsApp number" })),
   arrival: z.enum(["self_drive", "driver", "ride_hailing", "drop_off"], { error: "Choose how you'll arrive" }),
 });
 

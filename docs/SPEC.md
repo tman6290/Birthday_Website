@@ -59,23 +59,26 @@ When `capacity` guests are attending, `/` shows a full page instead: Nº 50 · C
 
 - Title: Your details
 - FULL NAME
-- PHONE NUMBER
+- WHATSAPP NUMBER
 - HOW WILL YOU ARRIVE? (select)
   - I'll drive myself
   - A driver will bring me
   - Bolt or similar
   - Someone will drop me off
+- Line above the button: We'll send your pass and a reminder to this WhatsApp number.
 - Button: Confirm attendance (shows "Sending…" while waiting)
-- Errors: Enter your full name · Enter a valid phone number · Choose how you'll arrive · This event is full. · Something went wrong. Please try again.
+- Errors: Enter your full name · Enter a valid WhatsApp number · Choose how you'll arrive · This event is full. · Something went wrong. Please try again.
 
 **After accepting** the sheet shows the pass:
 
 - See you on the 30th, {firstName}.
-- Your pass is below. Please save it and show it at the entrance.
+- Your pass is below and on WhatsApp. Please show it at the entrance.
 - The pass (see below)
 - Button: Save pass (downloads the QR as a PNG)
 
-There is no email. Funsho sends the link on WhatsApp, and guests keep the pass by saving it. Replying again with the same phone number shows the same pass, which is how a lost pass is recovered.
+If the WhatsApp message failed, the second line reads: Your pass is below. Please save it and show it at the entrance.
+
+There is no email. Funsho sends the invitation link from her own WhatsApp. The pass goes to the guest's WhatsApp through the WhatsApp Cloud API. Replying again with the same number shows the same pass and sends it to WhatsApp again, which is how a lost pass is recovered.
 
 **Decline sheet**
 
@@ -110,7 +113,7 @@ Staff can also scan with the phone camera. That opens `/p/[token]`, which shows 
 Sign-in screen as above, `host` only, then:
 
 - Three figures: Attending · Cars to park · Declined
-- Table, alphabetical: Name · Phone · Arrival · Parking (Yes or blank) · Arrived (time or blank)
+- Table, alphabetical: Name · Phone · Arrival · Parking (Yes or blank) · Arrived (time or blank) · WhatsApp ("Pass", "Pass, Reminder" or blank; hidden in print)
 - Declined guests listed below in a short second table: Name · Date responded
 - Button: Print. Print CSS: A4, hides buttons, repeats the table header on each page, adds an empty tick box column for paper check-in.
 
@@ -143,6 +146,8 @@ create unique index if not exists guests_phone_key on guests (phone) where phone
 - Token: 16 random bytes, base64url. The QR contains `${NEXT_PUBLIC_SITE_URL}/p/${token}` and nothing else.
 - `GET /api/pass/[token]/qr` returns the QR PNG.
 - `POST /api/checkin` with `{ token }`, staff only. If already checked in, return the existing time.
+- WhatsApp: after saving an acceptance, send the `funsho_pass` template (QR image header, first name, pass link button) to the guest's number. Record `whatsapp_sent`. A failure never fails the RSVP.
+- Reminders: a daily Vercel Cron (`/api/cron/whatsapp`, 09:00 Lagos) retries unsent passes, then from `reminderDate` (25 December) until the day before the event sends the `funsho_reminder` template to attending guests without `reminder_sent_at`. Each run stays under Meta's daily limit (`WHATSAPP_DAILY_LIMIT`, default 240); the rest go the next day.
 - Staff accounts: `host` (`/admin` and `/door`), `door1` and `door2` (`/door` only). Passwords in `HOST_PASSWORD`, `DOOR1_PASSWORD`, `DOOR2_PASSWORD`.
 - Staff session: one signed, httpOnly cookie naming the account, set after a correct sign-in. Lasts 7 days.
 - `/door` and `/admin` have a "Sign out" button that clears the cookie and returns to the sign-in screen.

@@ -12,6 +12,8 @@ export type Guest = {
   phone: string | null;
   arrival: Arrival | null;
   needs_parking: boolean;
+  whatsapp_sent: boolean;
+  reminder_sent_at: string | null;
   checked_in_at: string | null;
   created_at: string;
 };
@@ -122,4 +124,40 @@ export async function counts() {
 
 export async function allGuests() {
   return (await db()`select * from guests order by lower(full_name), created_at`) as Guest[];
+}
+
+export async function markPassSent(id: string, sent: boolean) {
+  await db()`update guests set whatsapp_sent = ${sent} where id = ${id}`;
+}
+
+/** Attending guests whose WhatsApp pass hasn't gone through yet (for the daily retry). */
+export async function guestsAwaitingPass(limit: number) {
+  return (await db()`
+    select * from guests
+    where response = 'attending' and phone is not null and not whatsapp_sent
+    order by created_at
+    limit ${limit}
+  `) as Guest[];
+}
+
+/**
+ * Claims up to `limit` attending guests who haven't had a reminder, stamping
+ * them so an overlapping run can't pick the same guests. Call
+ * `releaseReminder` for any send that fails so the next run retries it.
+ */
+export async function claimReminders(limit: number) {
+  return (await db()`
+    update guests set reminder_sent_at = now()
+    where id in (
+      select id from guests
+      where response = 'attending' and phone is not null and reminder_sent_at is null
+      order by created_at
+      limit ${limit}
+    ) and reminder_sent_at is null
+    returning *
+  `) as Guest[];
+}
+
+export async function releaseReminder(id: string) {
+  await db()`update guests set reminder_sent_at = null where id = ${id}`;
 }

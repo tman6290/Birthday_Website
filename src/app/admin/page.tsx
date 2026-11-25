@@ -47,7 +47,7 @@ async function GuestList() {
       </dl>
 
       <div className="mt-8 overflow-x-auto print:overflow-visible">
-        <table className="w-full min-w-[560px] border-collapse text-sm text-ink print:min-w-0 print:text-[10pt]">
+        <table className="w-full min-w-[640px] border-collapse text-sm text-ink print:min-w-0 print:text-[10pt]">
           <thead>
             <tr>
               <th className={`${th} hidden w-8 print:table-cell`} aria-label="Tick" />
@@ -56,6 +56,7 @@ async function GuestList() {
               <th className={th}>Arrival</th>
               <th className={th}>Parking</th>
               <th className={th}>Arrived</th>
+              <th className={`${th} print:hidden`}>WhatsApp</th>
             </tr>
           </thead>
           <tbody>
@@ -69,6 +70,9 @@ async function GuestList() {
                 <td className={td}>{arrivalLabel(g.arrival)}</td>
                 <td className={td}>{g.needs_parking ? "Yes" : ""}</td>
                 <td className={`${td} whitespace-nowrap`}>{formatTime(g.checked_in_at)}</td>
+                <td className={`${td} whitespace-nowrap print:hidden`}>
+                  {[g.whatsapp_sent && "Pass", g.reminder_sent_at && "Reminder"].filter(Boolean).join(", ")}
+                </td>
               </tr>
             ))}
           </tbody>

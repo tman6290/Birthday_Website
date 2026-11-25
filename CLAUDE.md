@@ -7,7 +7,7 @@ The flow, and nothing more:
 1. A guest opens the link from WhatsApp and sees an animated invitation.
 2. They accept or decline.
 3. Accepting asks for name, phone and how they'll arrive. After 400 acceptances the link shows "This event is full".
-4. They get a QR entry pass on screen and save it. No email: Funsho sends the link on WhatsApp herself.
+4. They get a QR entry pass on screen and on WhatsApp, and a WhatsApp reminder 5 days before. No email: Funsho sends the invitation link from her own WhatsApp.
 5. At the door, staff scan the QR to confirm the guest and mark them as arrived.
 6. The organiser sees and prints the guest list with the number of cars to park.
 
@@ -29,7 +29,7 @@ Keep it this small. Do not add features that are not in `docs/SPEC.md`.
 - Neon Postgres (Vercel Marketplace) with `@neondatabase/serverless` and plain SQL.
 - `zod`, `qrcode`, `qr-scanner`, `server-only`.
 - No UI kit, no icon library.
-- Everything must run free: Vercel Hobby, Neon free tier. Never add a paid service or a package that needs one (no WhatsApp Business API, no email provider).
+- Everything runs free (Vercel Hobby, Neon free tier) except the WhatsApp Cloud API, which the organisers pay Meta for per message (about ₦14 each). Use Meta directly, no paid middleman. Never add any other paid service.
 
 ## Rules
 

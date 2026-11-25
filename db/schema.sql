@@ -10,3 +10,5 @@ create table if not exists guests (
   created_at timestamptz not null default now()
 );
 create unique index if not exists guests_phone_key on guests (phone) where phone is not null;
+alter table guests add column if not exists whatsapp_sent boolean not null default false;
+alter table guests add column if not exists reminder_sent_at timestamptz;

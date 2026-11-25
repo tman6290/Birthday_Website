@@ -179,7 +179,12 @@ function AcceptForm({ titleRef }: { titleRef: React.RefObject<HTMLHeadingElement
   const uid = useId();
   const [errors, setErrors] = useState<Errors>({});
   const [sending, setSending] = useState(false);
-  const [done, setDone] = useState<{ firstName: string; token: string; fullName: string } | null>(null);
+  const [done, setDone] = useState<{
+    firstName: string;
+    token: string;
+    fullName: string;
+    whatsappSent: boolean;
+  } | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
@@ -217,6 +222,7 @@ function AcceptForm({ titleRef }: { titleRef: React.RefObject<HTMLHeadingElement
           firstName: String(data.firstName),
           token: String(data.token),
           fullName: parsed.data.fullName,
+          whatsappSent: Boolean(data.whatsappSent),
         });
       } else if (data.full) {
         setErrors({ form: FULL });
@@ -239,7 +245,9 @@ function AcceptForm({ titleRef }: { titleRef: React.RefObject<HTMLHeadingElement
       <div>
         <Title titleRef={titleRef}>See you on the 30th, {done.firstName}.</Title>
         <p className="mt-3 text-base leading-relaxed text-ink/85">
-          Your pass is below. Please save it and show it at the entrance.
+          {done.whatsappSent
+            ? "Your pass is below and on WhatsApp. Please show it at the entrance."
+            : "Your pass is below. Please save it and show it at the entrance."}
         </p>
         <div className="mt-7">
           <PassCard token={done.token} fullName={done.fullName} />
@@ -264,7 +272,7 @@ function AcceptForm({ titleRef }: { titleRef: React.RefObject<HTMLHeadingElement
             aria-describedby={describe("fullName")}
           />
         </Field>
-        <Field label="Phone number" id={`${uid}-phone`} error={errors.phone}>
+        <Field label="WhatsApp number" id={`${uid}-phone`} error={errors.phone}>
           <input
             id={`${uid}-phone`}
             name="phone"
@@ -300,7 +308,11 @@ function AcceptForm({ titleRef }: { titleRef: React.RefObject<HTMLHeadingElement
           </p>
         )}
 
-        <button type="submit" className={`${btnPrimary} mt-2`} disabled={sending}>
+        <p className="text-sm leading-relaxed text-ink/80">
+          We&apos;ll send your pass and a reminder to this WhatsApp number.
+        </p>
+
+        <button type="submit" className={btnPrimary} disabled={sending}>
           {sending ? "Sending…" : "Confirm attendance"}
         </button>
       </form>

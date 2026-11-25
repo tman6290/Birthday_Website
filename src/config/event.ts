@@ -3,6 +3,9 @@ export const event = {
   theme: "Royal Heritage",
   /** No new acceptances once this many guests are attending. */
   capacity: 400,
+  /** WhatsApp reminders go out from this date (Lagos time) until the day before the event. */
+  reminderDate: "2026-12-25",
+  eventDate: "2026-12-30",
   dateLabel: "Wednesday, 30 December 2026",
   programme: [
     { kicker: "An intimate hour of", title: "Hymns, Praise & Thanksgiving", time: "12:00 noon – 1:00 pm" },
