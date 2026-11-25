@@ -1,0 +1,74 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ivory: #fbf6ec;
+  --color-champagne: #f3e7cf;
+  --color-sand: #e9dcc0;
+  --color-gold: #c9a24d;
+  --color-gold-deep: #8a6a2f;
+  --color-wine: #7b2a2e;
+  --color-ink: #2b2220;
+  --color-emerald: #1f5e45;
+  --color-amber: #b7791f;
+
+  --font-serif: var(--font-cormorant), Georgia, serif;
+  --font-script: var(--font-pinyon), cursive;
+  --font-sans: var(--font-jost), system-ui, sans-serif;
+
+  --radius-input: 2px;
+  --radius-button: 4px;
+  --radius-box: 14px;
+}
+
+html {
+  background-color: var(--color-ivory);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100dvh;
+  background-color: var(--color-ivory);
+  background-image:
+    radial-gradient(ellipse 70% 45% at 0% 0%, rgb(243 231 207 / 0.9), transparent 70%),
+    radial-gradient(ellipse 70% 45% at 100% 100%, rgb(243 231 207 / 0.9), transparent 70%);
+  background-attachment: fixed;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-wine);
+  outline-offset: 3px;
+}
+
+@utility foil {
+  background-image: linear-gradient(100deg, #8a6a2f, #e8cd8f 45%, #b8893b 60%, #8a6a2f);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@utility label {
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--color-wine);
+}
+
+@utility double-rule {
+  border: 1px solid var(--color-gold);
+  outline: 1px solid var(--color-gold);
+  outline-offset: -7px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
