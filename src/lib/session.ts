@@ -1,6 +1,7 @@
 import "server-only";
 import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
+import { connection } from "next/server";
 
 export const STAFF_COOKIE = "f50_staff";
 const MAX_AGE = 60 * 60 * 24 * 7;
@@ -51,6 +52,8 @@ export async function startStaffSession(user: StaffUser) {
 }
 
 export async function staffUser(): Promise<StaffUser | null> {
+  // Session checks compare against the current time, so they must run at request time.
+  await connection();
   const value = (await cookies()).get(STAFF_COOKIE)?.value;
   if (!value) return null;
   const [user, expires, sig, ...rest] = value.split(".");
