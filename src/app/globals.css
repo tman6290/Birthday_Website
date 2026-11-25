@@ -14,10 +14,6 @@
   --font-serif: var(--font-cormorant), Georgia, serif;
   --font-script: var(--font-pinyon), cursive;
   --font-sans: var(--font-jost), system-ui, sans-serif;
-
-  --radius-input: 2px;
-  --radius-button: 4px;
-  --radius-box: 14px;
 }
 
 html {
@@ -25,20 +21,27 @@ html {
   color: var(--color-ink);
   font-family: var(--font-sans);
   -webkit-text-size-adjust: 100%;
+  font-variant-numeric: lining-nums;
 }
 
 body {
   min-height: 100dvh;
   background-color: var(--color-ivory);
-  background-image:
-    radial-gradient(ellipse 70% 45% at 0% 0%, rgb(243 231 207 / 0.9), transparent 70%),
-    radial-gradient(ellipse 70% 45% at 100% 100%, rgb(243 231 207 / 0.9), transparent 70%);
-  background-attachment: fixed;
 }
 
-:focus-visible {
-  outline: 2px solid var(--color-wine);
-  outline-offset: 3px;
+@layer base {
+  :focus-visible {
+    outline: 2px solid var(--color-wine);
+    outline-offset: 3px;
+  }
+}
+
+/* Ivory with a soft champagne wash in two corners, like silk */
+@utility silk {
+  background-color: var(--color-ivory);
+  background-image:
+    radial-gradient(ellipse 80% 45% at 0% 0%, rgb(243 231 207 / 0.95), transparent 70%),
+    radial-gradient(ellipse 80% 45% at 100% 100%, rgb(243 231 207 / 0.95), transparent 70%);
 }
 
 @utility foil {
@@ -57,10 +60,25 @@ body {
   color: var(--color-wine);
 }
 
+/* Double gold rule, like engraved stationery */
 @utility double-rule {
   border: 1px solid var(--color-gold);
   outline: 1px solid var(--color-gold);
   outline-offset: -7px;
+}
+
+@keyframes seal-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.seal-pulse {
+  animation: seal-pulse 2.4s ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -70,5 +88,8 @@ body {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+  .seal-pulse {
+    animation: none;
   }
 }
