@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { PrintButton } from "@/components/print-button";
+import { SignOutButton } from "@/components/sign-out-button";
 import { StaffLogin } from "@/components/staff-login";
 import { formatDate, formatTime } from "@/lib/format";
 import { allGuests } from "@/lib/guests";
@@ -28,14 +29,17 @@ async function GuestList() {
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 print:max-w-none print:p-0">
+      <div className="-mt-4 flex justify-end print:hidden">
+        <SignOutButton />
+      </div>
       <div className="flex items-center justify-between gap-4">
-        <h1 className="font-serif text-4xl text-ink">Guest list</h1>
+        <h1 className="whitespace-nowrap font-serif text-4xl text-ink">Guest list</h1>
         <PrintButton />
       </div>
 
       <dl className="mt-6 grid grid-cols-3 border-y border-gold">
         {figures.map((f) => (
-          <div key={f.label} className="px-2 py-4 text-center">
+          <div key={f.label} className="flex flex-col justify-between px-2 py-4 text-center">
             <dt className="text-[0.68rem] font-medium uppercase tracking-[0.2em] text-wine">{f.label}</dt>
             <dd className="mt-1 font-serif text-4xl tabular-nums text-ink">{f.value}</dd>
           </div>

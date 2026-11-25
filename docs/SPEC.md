@@ -145,6 +145,7 @@ create unique index if not exists guests_phone_key on guests (phone) where phone
 - `POST /api/checkin` with `{ token }`, staff only. If already checked in, return the existing time.
 - Staff accounts: `host` (`/admin` and `/door`), `door1` and `door2` (`/door` only). Passwords in `HOST_PASSWORD`, `DOOR1_PASSWORD`, `DOOR2_PASSWORD`.
 - Staff session: one signed, httpOnly cookie naming the account, set after a correct sign-in. Lasts 7 days.
+- `/door` and `/admin` have a "Sign out" button that clears the cookie and returns to the sign-in screen.
 
 ## Metadata
 

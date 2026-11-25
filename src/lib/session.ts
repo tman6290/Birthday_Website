@@ -51,6 +51,10 @@ export async function startStaffSession(user: StaffUser) {
   });
 }
 
+export async function endStaffSession() {
+  (await cookies()).delete(STAFF_COOKIE);
+}
+
 export async function staffUser(): Promise<StaffUser | null> {
   // Session checks compare against the current time, so they must run at request time.
   await connection();

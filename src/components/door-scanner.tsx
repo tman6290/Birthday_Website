@@ -5,6 +5,7 @@ import type QrScannerType from "qr-scanner";
 import { doorCounts, lookupPass } from "@/app/staff-actions";
 import type { CheckinGuest } from "@/lib/guests";
 import { CheckinCard } from "./checkin-card";
+import { SignOutButton } from "./sign-out-button";
 
 const PASS_PATH = /^\/p\/([A-Za-z0-9_-]{10,64})\/?$/;
 
@@ -78,10 +79,13 @@ export function DoorScanner({ initialCounts }: { initialCounts: { admitted: numb
 
   return (
     <div className="mx-auto flex min-h-dvh max-w-md flex-col px-4 py-5">
-      <p className="text-center text-lg text-ink" aria-live="polite">
-        <span className="font-medium tabular-nums">{figures.admitted}</span> of{" "}
-        <span className="font-medium tabular-nums">{figures.attending}</span> admitted
-      </p>
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-lg text-ink" aria-live="polite">
+          <span className="font-medium tabular-nums">{figures.admitted}</span> of{" "}
+          <span className="font-medium tabular-nums">{figures.attending}</span> admitted
+        </p>
+        <SignOutButton />
+      </div>
 
       <div className={`mt-4 ${guest ? "hidden" : ""}`}>
         <div className="relative aspect-square w-full overflow-hidden rounded-[4px] border border-gold bg-ink">

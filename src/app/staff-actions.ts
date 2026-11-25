@@ -1,7 +1,7 @@
 "use server";
 
 import { counts, findByToken, toCheckinGuest } from "@/lib/guests";
-import { checkLogin, isStaff, startStaffSession } from "@/lib/session";
+import { checkLogin, endStaffSession, isStaff, startStaffSession } from "@/lib/session";
 
 type SignInState = { error?: string; ok?: boolean; username?: string };
 
@@ -25,4 +25,8 @@ export async function doorCounts() {
   if (!(await isStaff())) throw new Error("Not signed in");
   const c = await counts();
   return { admitted: c.admitted, attending: c.attending };
+}
+
+export async function signOut() {
+  await endStaffSession();
 }
