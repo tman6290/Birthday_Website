@@ -12,13 +12,14 @@ export function PassCard({ token, fullName }: { token: string; fullName: string 
         <img src={qr} alt={`Entry pass QR code for ${fullName}`} width={204} height={204} className="block size-[204px]" />
       </div>
       <p className="mt-6 font-serif text-xl text-ink">{event.dateLabel}</p>
-      <ul className="mt-3 flex flex-col gap-1.5 text-sm text-ink/90">
+      <ul className="mt-3 flex flex-col gap-2.5 text-sm text-ink/90">
         {event.programme.map((item) => (
-          <li key={item.title} className="flex items-center justify-center gap-2">
-            <FleurDeLis className="w-3 shrink-0 text-wine" />
-            <span>
-              {item.title} · {item.time}
+          <li key={item.title}>
+            <span className="inline-flex items-center gap-1.5 text-wine">
+              <FleurDeLis className="w-3 shrink-0" />
+              {item.title}
             </span>
+            <span className="block">{item.time}</span>
           </li>
         ))}
       </ul>

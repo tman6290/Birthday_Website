@@ -19,6 +19,13 @@ export function normalisePhone(raw: string) {
   return compact;
 }
 
+/** +2348035117901 becomes +234 803 511 7901 for display. */
+export function formatPhone(phone: string | null) {
+  if (!phone) return "";
+  const m = phone.match(/^\+234(\d{3})(\d{3})(\d{4})$/);
+  return m ? `+234 ${m[1]} ${m[2]} ${m[3]}` : phone;
+}
+
 const fullName = z
   .string({ error: "Enter your full name" })
   .trim()

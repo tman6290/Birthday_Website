@@ -4,7 +4,7 @@ import { PrintButton } from "@/components/print-button";
 import { StaffLogin } from "@/components/staff-login";
 import { formatDate, formatTime } from "@/lib/format";
 import { allGuests } from "@/lib/guests";
-import { arrivalLabel } from "@/lib/rsvp-schema";
+import { arrivalLabel, formatPhone } from "@/lib/rsvp-schema";
 import { isHost } from "@/lib/session";
 
 export const metadata: Metadata = { title: "Guest list · Funsho at 50" };
@@ -61,7 +61,7 @@ async function GuestList() {
                   <span className="inline-block size-3.5 border border-ink" />
                 </td>
                 <td className={`${td} font-medium`}>{g.full_name}</td>
-                <td className={`${td} whitespace-nowrap tabular-nums`}>{g.phone}</td>
+                <td className={`${td} whitespace-nowrap tabular-nums`}>{formatPhone(g.phone)}</td>
                 <td className={td}>{arrivalLabel(g.arrival)}</td>
                 <td className={td}>{g.needs_parking ? "Yes" : ""}</td>
                 <td className={`${td} whitespace-nowrap`}>{formatTime(g.checked_in_at)}</td>
