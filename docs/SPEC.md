@@ -63,7 +63,7 @@ When `capacity` guests are attending, `/` shows a full page instead: Nº 50 · C
 - HOW WILL YOU ARRIVE? (select)
   - I'll drive myself
   - A driver will bring me
-  - Uber or Bolt
+  - Bolt or any other car service
   - Someone will drop me off
 - Button: Confirm attendance (shows "Sending…" while waiting)
 - Errors: Enter your full name · Enter a valid phone number · Choose how you'll arrive · This event is full. · Something went wrong. Please try again.

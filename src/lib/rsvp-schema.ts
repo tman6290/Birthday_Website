@@ -3,7 +3,7 @@ import { z } from "zod";
 export const arrivalOptions = [
   { value: "self_drive", label: "I'll drive myself" },
   { value: "driver", label: "A driver will bring me" },
-  { value: "ride_hailing", label: "Uber or Bolt" },
+  { value: "ride_hailing", label: "Bolt or any other car service" },
   { value: "drop_off", label: "Someone will drop me off" },
 ] as const;
 
