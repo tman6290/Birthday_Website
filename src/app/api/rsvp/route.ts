@@ -29,7 +29,7 @@ export async function POST(request: Request) {
       return Response.json({ ok: true, firstName });
     }
 
-    const guest = await saveAttending(data);
+    const { guest, isNew } = await saveAttending(data);
     let emailSent = false;
     try {
       emailSent = await sendPassEmail(guest);
@@ -37,6 +37,13 @@ export async function POST(request: Request) {
       console.error("Pass email failed", err);
     }
     await markEmailSent(guest.id, emailSent).catch((err) => console.error(err));
+
+    // A repeat accept only re-sends the pass to the inbox on file, so knowing
+    // someone's email address is not enough to see their pass.
+    if (!isNew) {
+      if (!emailSent) return Response.json({ ok: false, errors: {} }, { status: 502 });
+      return Response.json({ ok: true, firstName, emailSent, token: null });
+    }
 
     return Response.json({ ok: true, firstName, token: guest.token, emailSent });
   } catch (err) {

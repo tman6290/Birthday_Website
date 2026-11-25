@@ -37,9 +37,10 @@ export async function saveAttending(input: {
       phone = excluded.phone,
       arrival = excluded.arrival,
       needs_parking = excluded.needs_parking
-    returning *
-  `) as Guest[];
-  return rows[0];
+    returning *, (xmax = 0) as inserted
+  `) as (Guest & { inserted: boolean })[];
+  const { inserted, ...guest } = rows[0];
+  return { guest: guest as Guest, isNew: inserted };
 }
 
 export async function saveDeclined(fullName: string) {

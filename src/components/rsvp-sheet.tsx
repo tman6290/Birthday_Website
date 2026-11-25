@@ -178,7 +178,12 @@ function AcceptForm({ titleRef }: { titleRef: React.RefObject<HTMLHeadingElement
   const uid = useId();
   const [errors, setErrors] = useState<Errors>({});
   const [sending, setSending] = useState(false);
-  const [done, setDone] = useState<{ firstName: string; token: string; fullName: string; emailSent: boolean } | null>(
+  const [done, setDone] = useState<{
+    firstName: string;
+    token: string | null;
+    fullName: string;
+    emailSent: boolean;
+  } | null>(
     null,
   );
   const formRef = useRef<HTMLFormElement>(null);
@@ -217,7 +222,7 @@ function AcceptForm({ titleRef }: { titleRef: React.RefObject<HTMLHeadingElement
       if (data.ok) {
         setDone({
           firstName: String(data.firstName),
-          token: String(data.token),
+          token: typeof data.token === "string" ? data.token : null,
           fullName: parsed.data.fullName,
           emailSent: Boolean(data.emailSent),
         });
@@ -240,13 +245,17 @@ function AcceptForm({ titleRef }: { titleRef: React.RefObject<HTMLHeadingElement
       <div>
         <Title titleRef={titleRef}>See you on the 30th, {done.firstName}.</Title>
         <p className="mt-3 text-base leading-relaxed text-ink/85">
-          {done.emailSent
-            ? "Your pass is below and in your inbox. Please show it at the entrance."
-            : "Your pass is below. Please save it and show it at the entrance."}
+          {!done.token
+            ? "Your pass is in your inbox. Please show it at the entrance."
+            : done.emailSent
+              ? "Your pass is below and in your inbox. Please show it at the entrance."
+              : "Your pass is below. Please save it and show it at the entrance."}
         </p>
-        <div className="mt-7">
-          <PassCard token={done.token} fullName={done.fullName} />
-        </div>
+        {done.token && (
+          <div className="mt-7">
+            <PassCard token={done.token} fullName={done.fullName} />
+          </div>
+        )}
       </div>
     );
   }
