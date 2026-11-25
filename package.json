@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "db:setup": "node --env-file-if-exists=.env.local scripts/db-setup.mjs"
+    "db:setup": "node --env-file-if-exists=.env.local scripts/db-setup.mjs",
+    "email:test": "tsx --conditions=react-server --env-file-if-exists=.env.local scripts/send-test-email.mts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.2.1",
@@ -31,6 +32,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.4.6",
     "tailwindcss": "4.3.3",
+    "tsx": "^4.23.15",
     "typescript": "^5"
   }
 }
