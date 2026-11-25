@@ -8,6 +8,7 @@ import { btnPrimary } from "./respond-buttons";
 import { useRsvp, type SheetKind } from "./rsvp-context";
 
 const GENERIC_ERROR = "Something went wrong. Please try again.";
+const FULL = "This event is full.";
 
 type Errors = Record<string, string | undefined>;
 
@@ -151,7 +152,7 @@ async function postOnce(body: unknown) {
 
 const transient = (status: number) => status === 408 || status >= 500;
 
-/** Accepting is keyed on email, so retrying a transient failure is safe. Declines are sent once. */
+/** Accepting is keyed on phone number, so retrying a transient failure is safe. Declines are sent once. */
 async function postRsvp(body: { response: "accept" | "decline" }) {
   const delays = body.response === "accept" ? [1500, 4000] : [];
   for (let attempt = 0; ; attempt++) {
@@ -178,14 +179,7 @@ function AcceptForm({ titleRef }: { titleRef: React.RefObject<HTMLHeadingElement
   const uid = useId();
   const [errors, setErrors] = useState<Errors>({});
   const [sending, setSending] = useState(false);
-  const [done, setDone] = useState<{
-    firstName: string;
-    token: string | null;
-    fullName: string;
-    emailSent: boolean;
-  } | null>(
-    null,
-  );
+  const [done, setDone] = useState<{ firstName: string; token: string; fullName: string } | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
@@ -193,7 +187,7 @@ function AcceptForm({ titleRef }: { titleRef: React.RefObject<HTMLHeadingElement
   }, [done, titleRef]);
 
   const focusFirstError = (errs: Errors) => {
-    const order = ["fullName", "email", "phone", "arrival"];
+    const order = ["fullName", "phone", "arrival"];
     const first = order.find((k) => errs[k]);
     if (first) formRef.current?.querySelector<HTMLElement>(`[name="${first}"]`)?.focus();
   };
@@ -204,7 +198,6 @@ function AcceptForm({ titleRef }: { titleRef: React.RefObject<HTMLHeadingElement
     const body = {
       response: "accept" as const,
       fullName: String(fd.get("fullName") ?? ""),
-      email: String(fd.get("email") ?? ""),
       phone: String(fd.get("phone") ?? ""),
       arrival: String(fd.get("arrival") ?? ""),
     };
@@ -222,10 +215,11 @@ function AcceptForm({ titleRef }: { titleRef: React.RefObject<HTMLHeadingElement
       if (data.ok) {
         setDone({
           firstName: String(data.firstName),
-          token: typeof data.token === "string" ? data.token : null,
+          token: String(data.token),
           fullName: parsed.data.fullName,
-          emailSent: Boolean(data.emailSent),
         });
+      } else if (data.full) {
+        setErrors({ form: FULL });
       } else if (status === 400 && data.errors && Object.keys(data.errors).length) {
         const errs = data.errors as Errors;
         setErrors(errs);
@@ -245,17 +239,11 @@ function AcceptForm({ titleRef }: { titleRef: React.RefObject<HTMLHeadingElement
       <div>
         <Title titleRef={titleRef}>See you on the 30th, {done.firstName}.</Title>
         <p className="mt-3 text-base leading-relaxed text-ink/85">
-          {!done.token
-            ? "Your pass is in your inbox. Please show it at the entrance."
-            : done.emailSent
-              ? "Your pass is below and in your inbox. Please show it at the entrance."
-              : "Your pass is below. Please save it and show it at the entrance."}
+          Your pass is below. Please save it and show it at the entrance.
         </p>
-        {done.token && (
-          <div className="mt-7">
-            <PassCard token={done.token} fullName={done.fullName} />
-          </div>
-        )}
+        <div className="mt-7">
+          <PassCard token={done.token} fullName={done.fullName} />
+        </div>
       </div>
     );
   }
@@ -274,18 +262,6 @@ function AcceptForm({ titleRef }: { titleRef: React.RefObject<HTMLHeadingElement
             className={inputClass}
             aria-invalid={!!errors.fullName}
             aria-describedby={describe("fullName")}
-          />
-        </Field>
-        <Field label="Email" id={`${uid}-email`} error={errors.email}>
-          <input
-            id={`${uid}-email`}
-            name="email"
-            type="email"
-            autoComplete="email"
-            inputMode="email"
-            className={inputClass}
-            aria-invalid={!!errors.email}
-            aria-describedby={describe("email")}
           />
         </Field>
         <Field label="Phone number" id={`${uid}-phone`} error={errors.phone}>

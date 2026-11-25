@@ -28,11 +28,6 @@ const fullName = z
 export const acceptSchema = z.object({
   response: z.literal("accept"),
   fullName,
-  email: z
-    .string({ error: "Enter a valid email address" })
-    .trim()
-    .max(200, { error: "Enter a valid email address" })
-    .pipe(z.email({ error: "Enter a valid email address" })),
   phone: z
     .string({ error: "Enter a valid phone number" })
     .transform(normalisePhone)

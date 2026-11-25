@@ -1,15 +1,18 @@
 "use server";
 
 import { counts, findByToken, toCheckinGuest } from "@/lib/guests";
-import { isStaff, passwordMatches, startStaffSession } from "@/lib/session";
+import { checkLogin, isStaff, startStaffSession } from "@/lib/session";
 
-export async function signIn(_prev: { error?: string }, formData: FormData): Promise<{ error?: string; ok?: boolean }> {
-  const password = String(formData.get("password") ?? "");
-  if (!passwordMatches(password)) {
+type SignInState = { error?: string; ok?: boolean; username?: string };
+
+export async function signIn(_prev: SignInState, formData: FormData): Promise<SignInState> {
+  const username = String(formData.get("username") ?? "").slice(0, 50);
+  const user = checkLogin(username, String(formData.get("password") ?? ""));
+  if (!user) {
     await new Promise((r) => setTimeout(r, 600));
-    return { error: "That password isn't right." };
+    return { error: "That username or password isn't right.", username };
   }
-  await startStaffSession();
+  await startStaffSession(user);
   return { ok: true };
 }
 

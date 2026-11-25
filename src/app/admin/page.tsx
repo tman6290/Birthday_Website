@@ -5,7 +5,7 @@ import { StaffLogin } from "@/components/staff-login";
 import { formatDate, formatTime } from "@/lib/format";
 import { allGuests } from "@/lib/guests";
 import { arrivalLabel } from "@/lib/rsvp-schema";
-import { isStaff } from "@/lib/session";
+import { isHost } from "@/lib/session";
 
 export const metadata: Metadata = { title: "Guest list · Funsho at 50" };
 
@@ -13,7 +13,7 @@ const th = "border-b border-gold px-3 py-2 text-left text-[0.68rem] font-medium 
 const td = "border-b border-sand px-3 py-2.5 align-top";
 
 async function GuestList() {
-  if (!(await isStaff())) return <StaffLogin title="Guest list" />;
+  if (!(await isHost())) return <StaffLogin title="Guest list" />;
 
   const guests = await allGuests();
   const attending = guests.filter((g) => g.response === "attending");
@@ -43,13 +43,12 @@ async function GuestList() {
       </dl>
 
       <div className="mt-8 overflow-x-auto print:overflow-visible">
-        <table className="w-full min-w-[720px] border-collapse text-sm text-ink print:min-w-0 print:text-[10pt]">
+        <table className="w-full min-w-[560px] border-collapse text-sm text-ink print:min-w-0 print:text-[10pt]">
           <thead>
             <tr>
               <th className={`${th} hidden w-8 print:table-cell`} aria-label="Tick" />
               <th className={th}>Name</th>
               <th className={th}>Phone</th>
-              <th className={th}>Email</th>
               <th className={th}>Arrival</th>
               <th className={th}>Parking</th>
               <th className={th}>Arrived</th>
@@ -63,7 +62,6 @@ async function GuestList() {
                 </td>
                 <td className={`${td} font-medium`}>{g.full_name}</td>
                 <td className={`${td} whitespace-nowrap tabular-nums`}>{g.phone}</td>
-                <td className={`${td} break-all`}>{g.email}</td>
                 <td className={td}>{arrivalLabel(g.arrival)}</td>
                 <td className={td}>{g.needs_parking ? "Yes" : ""}</td>
                 <td className={`${td} whitespace-nowrap`}>{formatTime(g.checked_in_at)}</td>

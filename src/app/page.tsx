@@ -1,15 +1,72 @@
+import { Suspense } from "react";
+import { connection } from "next/server";
 import { event } from "@/config/event";
 import { EnvelopeIntro } from "@/components/envelope-intro";
 import { Crown, FleurDeLis, Flourish } from "@/components/ornaments";
 import { RespondButtons } from "@/components/respond-buttons";
 import { RsvpProvider } from "@/components/rsvp-context";
 import { RsvpSheet } from "@/components/rsvp-sheet";
+import { isFull } from "@/lib/guests";
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return <h2 className="label">{children}</h2>;
 }
 
 export default function Home() {
+  return (
+    <Suspense fallback={<div className="silk min-h-dvh" />}>
+      <Gate />
+    </Suspense>
+  );
+}
+
+async function Gate() {
+  await connection();
+  let full = false;
+  try {
+    full = await isFull();
+  } catch (err) {
+    // If the count can't be read, show the invitation; the RSVP route still enforces the limit.
+    console.error("Capacity check failed", err);
+  }
+  return full ? <EventFull /> : <Invitation />;
+}
+
+function EventFull() {
+  return (
+    <div className="silk flex min-h-dvh flex-col">
+      <main className="mx-auto flex max-w-[560px] flex-1 flex-col items-center justify-center px-5 py-16 text-center">
+        <Crown className="w-11 text-gold" />
+        <p className="foil mt-6 font-serif text-[5rem] font-medium leading-none">Nº 50</p>
+        <p className="mt-1 font-script text-4xl text-ink">Celebrating</p>
+        <h1 className="foil py-2 font-script text-7xl leading-[1.15]">{event.celebrant}</h1>
+        <Flourish className="mx-auto w-56 text-gold" />
+        <p className="mt-8 font-serif text-3xl italic text-ink">This event is full</p>
+        <ul className="mt-8 flex flex-col gap-2 text-base">
+          {event.contacts.map((c) => (
+            <li key={c.phone}>
+              <a href={`tel:${c.phone}`} className="inline-block py-1 text-ink hover:text-wine">
+                {c.name} · <span className="tabular-nums">{c.display}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </main>
+      <Footer />
+    </div>
+  );
+}
+
+function Footer() {
+  return (
+    <footer className="flex flex-col text-center text-[0.72rem] font-medium uppercase tracking-[0.3em] sm:flex-row sm:text-sm">
+      <p className="bg-wine px-4 py-4 text-ivory sm:flex-1 sm:text-right">Strictly by invitation</p>
+      <p className="bg-gold px-4 py-4 text-ink sm:flex-1 sm:text-left">Adults only</p>
+    </footer>
+  );
+}
+
+function Invitation() {
   return (
     <RsvpProvider>
       <EnvelopeIntro />
@@ -105,10 +162,7 @@ export default function Home() {
           </section>
         </main>
 
-        <footer className="flex flex-col text-center text-[0.72rem] font-medium uppercase tracking-[0.3em] sm:flex-row sm:text-sm">
-          <p className="bg-wine px-4 py-4 text-ivory sm:flex-1 sm:text-right">Strictly by invitation</p>
-          <p className="bg-gold px-4 py-4 text-ink sm:flex-1 sm:text-left">Adults only</p>
-        </footer>
+        <Footer />
       </div>
       <RsvpSheet />
     </RsvpProvider>

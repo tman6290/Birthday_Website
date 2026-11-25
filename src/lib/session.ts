@@ -5,6 +5,17 @@ import { cookies } from "next/headers";
 export const STAFF_COOKIE = "f50_staff";
 const MAX_AGE = 60 * 60 * 24 * 7;
 
+/** host can use /admin and /door; door1 and door2 can use /door only. Passwords live in env vars. */
+const ACCOUNTS = {
+  host: { env: "HOST_PASSWORD", admin: true },
+  door1: { env: "DOOR1_PASSWORD", admin: false },
+  door2: { env: "DOOR2_PASSWORD", admin: false },
+} as const;
+
+export type StaffUser = keyof typeof ACCOUNTS;
+
+const isAccount = (name: string): name is StaffUser => Object.hasOwn(ACCOUNTS, name);
+
 function secret() {
   const s = process.env.SESSION_SECRET;
   if (!s || s.length < 16) throw new Error("SESSION_SECRET is not set");
@@ -19,14 +30,17 @@ function safeEqual(a: string, b: string) {
   return timingSafeEqual(ha, hb);
 }
 
-export function passwordMatches(input: string) {
-  const expected = process.env.ADMIN_PASSWORD;
-  if (!expected) return false;
-  return safeEqual(input, expected);
+/** Returns the account name when the username and password match, otherwise null. */
+export function checkLogin(username: string, password: string): StaffUser | null {
+  const name = username.trim().toLowerCase();
+  // Compare against a dummy when the username is unknown so timing doesn't reveal valid names.
+  const expected = isAccount(name) ? process.env[ACCOUNTS[name].env] : undefined;
+  const ok = safeEqual(password, expected || "\0unset");
+  return ok && expected && isAccount(name) ? name : null;
 }
 
-export async function startStaffSession() {
-  const payload = `staff.${Date.now() + MAX_AGE * 1000}`;
+export async function startStaffSession(user: StaffUser) {
+  const payload = `${user}.${Date.now() + MAX_AGE * 1000}`;
   (await cookies()).set(STAFF_COOKIE, `${payload}.${sign(payload)}`, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
@@ -36,18 +50,26 @@ export async function startStaffSession() {
   });
 }
 
-export async function isStaff() {
+export async function staffUser(): Promise<StaffUser | null> {
   const value = (await cookies()).get(STAFF_COOKIE)?.value;
-  if (!value) return false;
-  const i = value.lastIndexOf(".");
-  if (i < 0) return false;
-  const payload = value.slice(0, i);
-  const sig = value.slice(i + 1);
+  if (!value) return null;
+  const [user, expires, sig, ...rest] = value.split(".");
+  if (rest.length || !user || !expires || !sig || !isAccount(user)) return null;
   try {
-    if (!safeEqual(sig, sign(payload))) return false;
+    if (!safeEqual(sig, sign(`${user}.${expires}`))) return null;
   } catch {
-    return false;
+    return null;
   }
-  const expires = Number(payload.split(".")[1]);
-  return Number.isFinite(expires) && expires > Date.now();
+  return Number(expires) > Date.now() ? user : null;
+}
+
+/** Any staff account: door check-in and the staff view of a pass. */
+export async function isStaff() {
+  return (await staffUser()) !== null;
+}
+
+/** Only the host account: the guest list. */
+export async function isHost() {
+  const user = await staffUser();
+  return user !== null && ACCOUNTS[user].admin;
 }

@@ -1,5 +1,6 @@
 import "server-only";
 import { randomBytes } from "node:crypto";
+import { event } from "@/config/event";
 import { db } from "./db";
 import { arrivalLabel, type Arrival } from "./rsvp-schema";
 
@@ -8,39 +9,47 @@ export type Guest = {
   token: string;
   response: "attending" | "declined";
   full_name: string;
-  email: string | null;
   phone: string | null;
   arrival: Arrival | null;
   needs_parking: boolean;
-  email_sent: boolean;
   checked_in_at: string | null;
   created_at: string;
 };
 
 export const newToken = () => randomBytes(16).toString("base64url");
 
-export async function saveAttending(input: {
-  fullName: string;
-  email: string;
-  phone: string;
-  arrival: Arrival;
-}) {
+/**
+ * Saves an acceptance, keyed on phone number. A phone already on the list is
+ * updated and keeps its token. A new phone is only added while fewer than
+ * `capacity` guests are attending; returns null when the event is full.
+ */
+export async function saveAttending(input: { fullName: string; phone: string; arrival: Arrival }) {
   const needsParking = input.arrival === "self_drive" || input.arrival === "driver";
-  const rows = (await db()`
-    insert into guests (token, response, full_name, email, phone, arrival, needs_parking)
-    values (${newToken()}, 'attending', ${input.fullName}, ${input.email}, ${input.phone}, ${input.arrival}, ${needsParking})
-    on conflict ((lower(email))) where email is not null
+
+  const updated = (await db()`
+    update guests set
+      response = 'attending',
+      full_name = ${input.fullName},
+      arrival = ${input.arrival},
+      needs_parking = ${needsParking}
+    where phone = ${input.phone}
+    returning *
+  `) as Guest[];
+  if (updated[0]) return updated[0];
+
+  const inserted = (await db()`
+    insert into guests (token, response, full_name, phone, arrival, needs_parking)
+    select ${newToken()}, 'attending', ${input.fullName}, ${input.phone}, ${input.arrival}, ${needsParking}
+    where (select count(*) from guests where response = 'attending') < ${event.capacity}
+    on conflict (phone) where phone is not null
     do update set
       response = 'attending',
       full_name = excluded.full_name,
-      email = excluded.email,
-      phone = excluded.phone,
       arrival = excluded.arrival,
       needs_parking = excluded.needs_parking
-    returning *, (xmax = 0) as inserted
-  `) as (Guest & { inserted: boolean })[];
-  const { inserted, ...guest } = rows[0];
-  return { guest: guest as Guest, isNew: inserted };
+    returning *
+  `) as Guest[];
+  return inserted[0] ?? null;
 }
 
 export async function saveDeclined(fullName: string) {
@@ -50,8 +59,11 @@ export async function saveDeclined(fullName: string) {
   `;
 }
 
-export async function markEmailSent(id: string, sent: boolean) {
-  await db()`update guests set email_sent = ${sent} where id = ${id}`;
+export async function isFull() {
+  const rows = (await db()`
+    select count(*)::int as attending from guests where response = 'attending'
+  `) as { attending: number }[];
+  return rows[0].attending >= event.capacity;
 }
 
 export async function findByToken(token: string) {

@@ -5,6 +5,9 @@ import { useActionState, useEffect, useId } from "react";
 import { signIn } from "@/app/staff-actions";
 import { btnPrimary } from "./respond-buttons";
 
+const inputClass =
+  "mt-2 block w-full rounded-[2px] border-0 border-b border-gold bg-transparent px-0.5 py-2.5 text-lg text-ink focus:border-wine focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wine";
+
 export function StaffLogin({ title }: { title: string }) {
   const router = useRouter();
   const id = useId();
@@ -19,19 +22,36 @@ export function StaffLogin({ title }: { title: string }) {
       <h1 className="font-serif text-4xl text-ink">{title}</h1>
       <form action={action} className="mt-8 flex flex-col gap-6">
         <div>
-          <label htmlFor={id} className="label block">
+          <label htmlFor={`${id}-user`} className="label block">
+            Username
+          </label>
+          <input
+            id={`${id}-user`}
+            name="username"
+            autoComplete="username"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
+            required
+            autoFocus
+            defaultValue={state.username}
+            key={state.username}
+            className={inputClass}
+          />
+        </div>
+        <div>
+          <label htmlFor={`${id}-pass`} className="label block">
             Password
           </label>
           <input
-            id={id}
+            id={`${id}-pass`}
             name="password"
             type="password"
             autoComplete="current-password"
             required
-            autoFocus
             aria-invalid={!!state.error}
             aria-describedby={state.error ? `${id}-error` : undefined}
-            className="mt-2 block w-full rounded-[2px] border-0 border-b border-gold bg-transparent px-0.5 py-2.5 text-lg text-ink focus:border-wine focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wine"
+            className={inputClass}
           />
           {state.error && (
             <p id={`${id}-error`} className="mt-1.5 text-sm text-wine">

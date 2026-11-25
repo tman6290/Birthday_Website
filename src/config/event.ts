@@ -1,6 +1,8 @@
 export const event = {
   celebrant: "Funsho",
   theme: "Royal Heritage",
+  /** No new acceptances once this many guests are attending. */
+  capacity: 400,
   dateLabel: "Wednesday, 30 December 2026",
   programme: [
     { kicker: "An intimate hour of", title: "Hymns, Praise & Thanksgiving", time: "12:00 noon – 1:00 pm" },

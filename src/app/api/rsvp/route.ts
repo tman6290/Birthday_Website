@@ -1,5 +1,4 @@
-import { sendPassEmail } from "@/lib/email";
-import { markEmailSent, saveAttending, saveDeclined } from "@/lib/guests";
+import { saveAttending, saveDeclined } from "@/lib/guests";
 import { firstNameOf, rsvpSchema } from "@/lib/rsvp-schema";
 
 export async function POST(request: Request) {
@@ -29,23 +28,10 @@ export async function POST(request: Request) {
       return Response.json({ ok: true, firstName });
     }
 
-    const { guest, isNew } = await saveAttending(data);
-    let emailSent = false;
-    try {
-      emailSent = await sendPassEmail(guest);
-    } catch (err) {
-      console.error("Pass email failed", err);
-    }
-    await markEmailSent(guest.id, emailSent).catch((err) => console.error(err));
+    const guest = await saveAttending(data);
+    if (!guest) return Response.json({ ok: false, full: true, errors: {} }, { status: 409 });
 
-    // A repeat accept only re-sends the pass to the inbox on file, so knowing
-    // someone's email address is not enough to see their pass.
-    if (!isNew) {
-      if (!emailSent) return Response.json({ ok: false, errors: {} }, { status: 502 });
-      return Response.json({ ok: true, firstName, emailSent, token: null });
-    }
-
-    return Response.json({ ok: true, firstName, token: guest.token, emailSent });
+    return Response.json({ ok: true, firstName, token: guest.token });
   } catch (err) {
     console.error("RSVP failed", err);
     return Response.json({ ok: false, errors: {} }, { status: 500 });

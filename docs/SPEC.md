@@ -8,6 +8,7 @@
 export const event = {
   celebrant: "Funsho",
   theme: "Royal Heritage",
+  capacity: 400,
   dateLabel: "Wednesday, 30 December 2026",
   programme: [
     { kicker: "An intimate hour of", title: "Hymns, Praise & Thanksgiving", time: "12:00 noon – 1:00 pm" },
@@ -33,6 +34,8 @@ export const event = {
 
 ### `/` The invitation
 
+When `capacity` guests are attending, `/` shows a full page instead: Nº 50 · Celebrating · Funsho, then "This event is full", the two contacts as tap-to-call links, and the footer band.
+
 **Intro overlay** (envelope animation, see DESIGN.md). Ends on the invitation card:
 
 - You are invited to celebrate
@@ -56,7 +59,6 @@ export const event = {
 
 - Title: Your details
 - FULL NAME
-- EMAIL
 - PHONE NUMBER
 - HOW WILL YOU ARRIVE? (select)
   - I'll drive myself
@@ -64,16 +66,16 @@ export const event = {
   - Uber or Bolt
   - Someone will drop me off
 - Button: Confirm attendance (shows "Sending…" while waiting)
-- Errors: Enter your full name · Enter a valid email address · Enter a valid phone number · Choose how you'll arrive · Something went wrong. Please try again.
+- Errors: Enter your full name · Enter a valid phone number · Choose how you'll arrive · This event is full. · Something went wrong. Please try again.
 
 **After accepting** the sheet shows the pass:
 
 - See you on the 30th, {firstName}.
-- Your pass is below and in your inbox. Please show it at the entrance.
+- Your pass is below. Please save it and show it at the entrance.
 - The pass (see below)
 - Button: Save pass (downloads the QR as a PNG)
 
-If the email failed, the second line reads: Your pass is below. Please save it and show it at the entrance.
+There is no email. Funsho sends the link on WhatsApp, and guests keep the pass by saving it. Replying again with the same phone number shows the same pass, which is how a lost pass is recovered.
 
 **Decline sheet**
 
@@ -84,7 +86,7 @@ If the email failed, the second line reads: Your pass is below. Please save it a
 
 ### `/p/[token]` The pass
 
-Opened from the email link or by scanning the QR.
+Opened by scanning the QR.
 
 - For guests: ENTRY PASS · full name · QR · date · times · venue · Save pass.
 - For signed-in staff: a check-in card instead (see Door).
@@ -92,7 +94,7 @@ Opened from the email link or by scanning the QR.
 
 ### `/door` Check-in
 
-1. Password screen (ADMIN_PASSWORD). Label: PASSWORD. Button: Sign in. Error: That password isn't right.
+1. Sign-in screen. Labels: USERNAME, PASSWORD. Button: Sign in. Error: That username or password isn't right. Accounts: `host`, `door1`, `door2`.
 2. Camera scanner (`qr-scanner`, back camera). On a scan whose path is `/p/{token}`, pause and show the check-in card.
 3. Check-in card:
    - Valid, not yet arrived: green panel, full name, arrival method, button **Admit**.
@@ -105,10 +107,10 @@ Staff can also scan with the phone camera. That opens `/p/[token]`, which shows 
 
 ### `/admin` Guest list
 
-Password screen as above, then:
+Sign-in screen as above, `host` only, then:
 
 - Three figures: Attending · Cars to park · Declined
-- Table, alphabetical: Name · Phone · Email · Arrival · Parking (Yes or blank) · Arrived (time or blank)
+- Table, alphabetical: Name · Phone · Arrival · Parking (Yes or blank) · Arrived (time or blank)
 - Declined guests listed below in a short second table: Name · Date responded
 - Button: Print. Print CSS: A4, hides buttons, repeats the table header on each page, adds an empty tick box column for paper check-in.
 
@@ -122,60 +124,27 @@ create table if not exists guests (
   token text not null unique,
   response text not null check (response in ('attending', 'declined')),
   full_name text not null,
-  email text,
   phone text,
   arrival text check (arrival in ('self_drive', 'driver', 'ride_hailing', 'drop_off')),
   needs_parking boolean not null default false,
-  email_sent boolean not null default false,
   checked_in_at timestamptz,
   created_at timestamptz not null default now()
 );
-create unique index if not exists guests_email_key on guests (lower(email)) where email is not null;
+create unique index if not exists guests_phone_key on guests (phone) where phone is not null;
 ```
 
 ## Rules
 
-- `POST /api/rsvp` takes `{ response: "accept", fullName, email, phone, arrival }` or `{ response: "decline", fullName }`, validated with zod.
+- `POST /api/rsvp` takes `{ response: "accept", fullName, phone, arrival }` or `{ response: "decline", fullName }`, validated with zod.
 - Phone: strip spaces. `0803...` (11 digits) becomes `+234803...`.
 - `needs_parking` is true for `self_drive` and `driver`.
-- Same email accepting twice: update the existing row, keep its token, send the email again.
+- Same phone accepting twice: update the existing row and keep its token.
+- A new acceptance is refused once `capacity` guests are attending (declines don't count). The route returns `{ ok: false, full: true }`.
 - Token: 16 random bytes, base64url. The QR contains `${NEXT_PUBLIC_SITE_URL}/p/${token}` and nothing else.
-- Send the email after saving. If it fails, still return success with `emailSent: false`.
 - `GET /api/pass/[token]/qr` returns the QR PNG.
 - `POST /api/checkin` with `{ token }`, staff only. If already checked in, return the existing time.
-- Staff session: one signed, httpOnly cookie set after the correct ADMIN_PASSWORD. Lasts 7 days. Shared by `/door` and `/admin`.
-
-## Email
-
-- Nodemailer over SMTP (env vars in `.env.example`).
-- Subject: Your entry pass · Funsho at 50
-- HTML with tables and inline styles, 600px, ivory background, wine header, Georgia for serif. QR attached inline as `cid:pass-qr` (Gmail blocks base64 images).
-
-Body:
-
-> Dear {firstName},
->
-> Thank you for accepting. We look forward to celebrating Funsho with you.
->
-> [QR]
->
-> {fullName}
-> Please show this pass at the entrance.
->
-> Wednesday, 30 December 2026
-> Hymns, Praise & Thanksgiving · 12:00 noon – 1:00 pm
-> Reception · 2:00 pm – 8:00 pm
-> Brava Event Center, Plot 8, Guinness Road, Off Akilo Road, Ikeja
->
-> Dress code
-> Ladies: elegant dresses in shades of green or champagne gold, complemented with emerald green fascinators.
-> Gentlemen: English suits or distinguished native attire.
->
-> Questions? Bukola, +234 803 511 7901 · Blay, +234 816 747 0038
->
-> [View your pass online]
->
-> Strictly by invitation · Adults only
+- Staff accounts: `host` (`/admin` and `/door`), `door1` and `door2` (`/door` only). Passwords in `HOST_PASSWORD`, `DOOR1_PASSWORD`, `DOOR2_PASSWORD`.
+- Staff session: one signed, httpOnly cookie naming the account, set after a correct sign-in. Lasts 7 days.
 
 ## Metadata
 
