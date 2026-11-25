@@ -13,7 +13,7 @@ export default function Home() {
   return (
     <RsvpProvider>
       <EnvelopeIntro />
-      <div className="silk min-h-dvh">
+      <div id="page" className="silk min-h-dvh">
         <main id="main" tabIndex={-1} className="mx-auto max-w-[560px] px-5 pb-16 pt-14 outline-none sm:pt-20">
           <header className="text-center">
             <Crown className="mx-auto w-11 text-gold" />

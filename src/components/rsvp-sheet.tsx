@@ -22,7 +22,9 @@ export function RsvpSheet() {
     if (!sheet) return;
     returnFocus.current = document.activeElement as HTMLElement | null;
     const prev = document.body.style.overflow;
+    const page = document.getElementById("page");
     document.body.style.overflow = "hidden";
+    if (page) page.inert = true;
     requestAnimationFrame(() => titleRef.current?.focus());
 
     const onKey = (e: KeyboardEvent) => {
@@ -49,6 +51,7 @@ export function RsvpSheet() {
     return () => {
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = prev;
+      if (page) page.inert = false;
       const el = returnFocus.current;
       if (el && document.contains(el)) el.focus();
       else document.getElementById("main")?.focus();
@@ -136,7 +139,7 @@ function Field({
 const inputClass =
   "mt-2 block w-full rounded-[2px] border-0 border-b border-gold bg-transparent px-0.5 py-2.5 text-lg text-ink focus:border-wine focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wine aria-[invalid=true]:border-wine";
 
-async function postRsvp(body: unknown) {
+async function postOnce(body: unknown) {
   const res = await fetch("/api/rsvp", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -144,6 +147,22 @@ async function postRsvp(body: unknown) {
   });
   const data = await res.json().catch(() => ({}));
   return { status: res.status, data } as { status: number; data: Record<string, unknown> };
+}
+
+const transient = (status: number) => status === 408 || status >= 500;
+
+/** Accepting is keyed on email, so retrying a transient failure is safe. Declines are sent once. */
+async function postRsvp(body: { response: "accept" | "decline" }) {
+  const delays = body.response === "accept" ? [1500, 4000] : [];
+  for (let attempt = 0; ; attempt++) {
+    try {
+      const result = await postOnce(body);
+      if (!transient(result.status) || attempt >= delays.length) return result;
+    } catch (err) {
+      if (attempt >= delays.length) throw err;
+    }
+    await new Promise((r) => setTimeout(r, delays[attempt]));
+  }
 }
 
 function collectErrors(issues: { path: PropertyKey[]; message: string }[]): Errors {

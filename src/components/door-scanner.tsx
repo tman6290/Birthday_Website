@@ -89,7 +89,7 @@ export function DoorScanner({ initialCounts }: { initialCounts: { admitted: numb
         </div>
         {cameraError && (
           <p role="alert" className="mt-4 text-center text-wine">
-            The camera isn&apos;t available. Allow camera access and reload, or scan with the phone camera.
+            The camera isn&apos;t available.
           </p>
         )}
         {lookupError && (

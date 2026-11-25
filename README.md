@@ -20,6 +20,7 @@ Nothing. Vercel Hobby hosts it, Neon's free tier stores the RSVPs, and a Gmail a
 npm install
 cp .env.example .env.local
 npm run db:setup
+npm run email:test   # sends a sample pass to EMAIL_TEST_TO
 npm run dev
 ```
 

@@ -22,9 +22,12 @@ export function EnvelopeIntro() {
   useEffect(() => {
     if (!visible) return;
     const prev = document.body.style.overflow;
+    const page = document.getElementById("page");
     document.body.style.overflow = "hidden";
+    if (page) page.inert = true;
     return () => {
       document.body.style.overflow = prev;
+      if (page) page.inert = false;
     };
   }, [visible]);
 
