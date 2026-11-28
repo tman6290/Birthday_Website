@@ -68,7 +68,20 @@ export async function isFull() {
   return rows[0].attending >= event.capacity;
 }
 
-export async function findByToken(token: string) {
+/**
+ * The approved WhatsApp templates' button URL has a stray literal "{{1}}" before
+ * the token (…/p/%7B%7B1%7D%7D<token>). Strip it so those buttons still open the pass.
+ */
+function cleanToken(raw: string) {
+  let token = raw;
+  try {
+    token = decodeURIComponent(raw);
+  } catch {}
+  return token.replace(/^\{\{1\}\}/, "");
+}
+
+export async function findByToken(rawToken: string) {
+  const token = cleanToken(rawToken);
   if (!/^[A-Za-z0-9_-]{10,64}$/.test(token)) return null;
   const rows = (await db()`select * from guests where token = ${token} limit 1`) as Guest[];
   return rows[0] ?? null;
