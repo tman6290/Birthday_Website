@@ -12,3 +12,13 @@ create table if not exists guests (
 create unique index if not exists guests_phone_key on guests (phone) where phone is not null;
 alter table guests add column if not exists whatsapp_sent boolean not null default false;
 alter table guests add column if not exists reminder_sent_at timestamptz;
+
+-- Delivery reports from Meta's webhook (sent, delivered, read, failed with reason).
+create table if not exists whatsapp_events (
+  id bigint generated always as identity primary key,
+  message_id text,
+  status text,
+  recipient text,
+  errors jsonb,
+  created_at timestamptz not null default now()
+);
