@@ -15,6 +15,8 @@ export async function GET(request: Request, ctx: RouteContext<"/api/pass/[token]
   return new Response(new Uint8Array(png), {
     headers: {
       "Content-Type": "image/png",
+      // Meta's media fetcher needs a known size; without it the WhatsApp image can fail to download.
+      "Content-Length": String(png.length),
       "Cache-Control": "private, max-age=3600",
       ...(download ? { "Content-Disposition": `attachment; filename="${filename}"` } : {}),
     },
