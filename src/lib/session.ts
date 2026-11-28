@@ -2,6 +2,7 @@ import "server-only";
 import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
 import { connection } from "next/server";
+import { envValue } from "./env";
 
 export const STAFF_COOKIE = "f50_staff";
 const MAX_AGE = 60 * 60 * 24 * 7;
@@ -16,14 +17,6 @@ const ACCOUNTS = {
 export type StaffUser = keyof typeof ACCOUNTS;
 
 const isAccount = (name: string): name is StaffUser => Object.hasOwn(ACCOUNTS, name);
-
-/** Env values pasted into a dashboard can carry stray spaces or quotes; ignore them. */
-function envValue(name: string) {
-  const v = process.env[name]?.trim();
-  if (!v) return undefined;
-  const quoted = v.match(/^(['"])(.*)\1$/);
-  return quoted ? quoted[2] : v;
-}
 
 function secret() {
   const s = envValue("SESSION_SECRET");

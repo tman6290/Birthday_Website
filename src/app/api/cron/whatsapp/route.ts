@@ -1,4 +1,5 @@
 import { event } from "@/config/event";
+import { envValue } from "@/lib/env";
 import { claimReminders, guestsAwaitingPass, markPassSent, releaseReminder, type Guest } from "@/lib/guests";
 import { firstNameOf } from "@/lib/rsvp-schema";
 import { sendTemplate, whatsappEnabled } from "@/lib/whatsapp";
@@ -26,13 +27,13 @@ const recipient = (g: Guest) => ({ phone: g.phone ?? "", firstName: firstNameOf(
  * limit on new recipients (WHATSAPP_DAILY_LIMIT, default 240).
  */
 export async function GET(request: Request) {
-  const secret = process.env.CRON_SECRET;
+  const secret = envValue("CRON_SECRET");
   if (!secret || request.headers.get("authorization") !== `Bearer ${secret}`) {
     return Response.json({ ok: false }, { status: 401 });
   }
   if (!whatsappEnabled()) return Response.json({ ok: true, skipped: "WhatsApp is not configured" });
 
-  let budget = Number(process.env.WHATSAPP_DAILY_LIMIT) || 240;
+  let budget = Number(envValue("WHATSAPP_DAILY_LIMIT")) || 240;
 
   // 1. Passes that didn't go through when the guest RSVP'd.
   const awaiting = await guestsAwaitingPass(budget);

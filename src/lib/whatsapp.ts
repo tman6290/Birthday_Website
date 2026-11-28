@@ -1,4 +1,5 @@
 import "server-only";
+import { envValue } from "./env";
 import { siteUrl } from "./qr";
 
 /**
@@ -9,14 +10,14 @@ import { siteUrl } from "./qr";
  *   button: a URL button "https://<site>/p/{{1}}" where {{1}} = pass token
  */
 export const TEMPLATES = {
-  pass: process.env.WHATSAPP_PASS_TEMPLATE || "funsho_pass",
-  reminder: process.env.WHATSAPP_REMINDER_TEMPLATE || "funsho_reminder",
+  pass: envValue("WHATSAPP_PASS_TEMPLATE") ?? "funsho_pass",
+  reminder: envValue("WHATSAPP_REMINDER_TEMPLATE") ?? "funsho_reminder",
 } as const;
 
 type TemplateKind = keyof typeof TEMPLATES;
 
 export function whatsappEnabled() {
-  return Boolean(process.env.WHATSAPP_TOKEN && process.env.WHATSAPP_PHONE_NUMBER_ID);
+  return Boolean(envValue("WHATSAPP_TOKEN") && envValue("WHATSAPP_PHONE_NUMBER_ID"));
 }
 
 /** +2348035117901 becomes 2348035117901, the format the API expects. */
@@ -32,7 +33,7 @@ export function buildTemplateMessage(
     type: "template",
     template: {
       name: TEMPLATES[kind],
-      language: { code: process.env.WHATSAPP_TEMPLATE_LANG || "en" },
+      language: { code: envValue("WHATSAPP_TEMPLATE_LANG") ?? "en" },
       components: [
         {
           type: "header",
@@ -51,13 +52,13 @@ export async function sendTemplate(
   guest: { phone: string; firstName: string; token: string },
 ): Promise<boolean> {
   if (!whatsappEnabled()) return false;
-  const version = process.env.WHATSAPP_API_VERSION || "v23.0";
-  const url = `https://graph.facebook.com/${version}/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
+  const version = envValue("WHATSAPP_API_VERSION") ?? "v23.0";
+  const url = `https://graph.facebook.com/${version}/${envValue("WHATSAPP_PHONE_NUMBER_ID")}/messages`;
   try {
     const res = await fetch(url, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${process.env.WHATSAPP_TOKEN}`,
+        Authorization: `Bearer ${envValue("WHATSAPP_TOKEN")}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify(buildTemplateMessage(kind, guest)),
